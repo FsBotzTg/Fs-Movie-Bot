@@ -30,7 +30,7 @@ async def clone_menu(client, message):
         vj = Client(
             f"{bot_token}", API_ID, API_HASH,
             bot_token=bot_token,
-            plugins={"root": "CloneTechVJ"}
+            plugins={"root": "Clone"}
         )
         await vj.start()
         bot = await vj.get_me()
@@ -58,7 +58,7 @@ async def restart_bots():
             vj = Client(
                 f"{bot_token}", API_ID, API_HASH,
                 bot_token=bot_token,
-                plugins={"root": "CloneTechVJ"},
+                plugins={"root": "Clone"},
             )
             await vj.start()
         except Exception as e:
