@@ -2,8 +2,8 @@ import asyncio
 import logging
 from info import *
 from pyrogram import Client
-from TechVJ.util.config_parser import TokenParser
-from TechVJ.bot import multi_clients, work_loads, FsBotz
+from FsBotz.util.config_parser import TokenParser
+from FsBotz.bot import multi_clients, work_loads, FsBotz
 
 
 async def initialize_clients():
