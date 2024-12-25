@@ -3,17 +3,13 @@ from Script import script
 from pyrogram import Client, filters, enums
 from pyrogram.errors import ChatAdminRequired, FloodWait
 from pyrogram.types import *
-from database.ia_filterdb import Media, get_file_details, unpack_new_file_id, get_bad_files
+from database.ia_filterdb import col, sec_col, get_file_details, unpack_new_file_id, get_bad_files
 from database.users_chats_db import db
 from Clone.database.clone_bot_userdb import clonedb
 from info import *
 from shortzy import Shortzy
 from utils import get_size, temp, get_seconds, get_clone_shortlink
 logger = logging.getLogger(__name__)
-
-CLONE_USERS ="""#NewUser
-ID - <code>{}</code>
-Nᴀᴍᴇ - {}"""
 
 @Client.on_message(filters.command("start") & filters.incoming)
 async def start(client, message):
@@ -30,11 +26,6 @@ async def start(client, message):
         await message.reply(script.CLONE_START_TXT.format(message.from_user.mention if message.from_user else message.chat.title, me.username, me.first_name), reply_markup=reply_markup)
         return 
     if not await clonedb.is_user_exist(me.id, message.from_user.id):
-        me = await client.get_me()
-        owner = await db.get_bot(me.id)
-        ADMIN_CLONE = int(owner["user_id"])
-        clone_users_text = CLONE_USERS.format(message.from_user.id, message.from_user.mention)
-        await client.send_message(chat_id=ADMIN_CLONE, text=clone_users_text)
         await clonedb.add_user(me.id, message.from_user.id)
     if len(message.command) != 2:
         buttons = [[
@@ -81,7 +72,7 @@ async def start(client, message):
     elif data.startswith("short"):
         user = message.from_user.id
         files_ = await get_file_details(file_id)
-        files = files_[0]
+        files = files_
         g = await get_clone_shortlink(f"https://telegram.me/{me.username}?start=file_{file_id}", cd["url"], cd["api"]) 
         t = cd["tutorial"]
         btn = [[
@@ -89,7 +80,7 @@ async def start(client, message):
         ],[
             InlineKeyboardButton('⁉️ Hᴏᴡ Tᴏ Dᴏᴡɴʟᴏᴀᴅ ⁉️', url=t)
         ]]
-        k = await client.send_message(chat_id=user,text=f"<b>📕Nᴀᴍᴇ ➠ : <code>{files.file_name}</code> \n\n🔗Sɪᴢᴇ ➠ : {get_size(files.file_size)}\n\n📂Fɪʟᴇ ʟɪɴᴋ ➠ : {g}\n\n<i>Note: This message is deleted in 20 mins to avoid copyrights. Save the link to Somewhere else</i></b>", reply_markup=InlineKeyboardMarkup(btn))
+        k = await client.send_message(chat_id=user,text=f"<b>📕Nᴀᴍᴇ ➠ : <code>{files['file_name']}</code> \n\n🔗Sɪᴢᴇ ➠ : {get_size(files['file_size'])}\n\n📂Fɪʟᴇ ʟɪɴᴋ ➠ : {g}\n\n<i>Note: This message is deleted in 20 mins to avoid copyrights. Save the link to Somewhere else</i></b>", reply_markup=InlineKeyboardMarkup(btn))
         await asyncio.sleep(1200)
         await k.edit("<b>Your message is successfully deleted!!!</b>")
         return
@@ -100,18 +91,18 @@ async def start(client, message):
             return await message.reply('<b><i>No such file exist.</b></i>')
         filesarr = []
         for file in files:
-            vj_file_id = file.file_id
+            vj_file_id = file['file_id']
             k = await temp.BOT.send_cached_media(chat_id=PUBLIC_FILE_CHANNEL, file_id=vj_file_id)
             vj = await client.get_messages(PUBLIC_FILE_CHANNEL, k.id)
             mg = getattr(vj, vj.media.value)
             file_id = mg.file_id
             files_ = await get_file_details(vj_file_id)
-            files1 = files_[0]
-            title = '@Fs_Botz  ' + ' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files1.file_name.split()))
-            size=get_size(files1.file_size)
-            f_caption=files1.caption
+            files1 = files_
+            title = ' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files1['file_name'].split()))
+            size=get_size(files1['file_size'])
+            f_caption=files1['caption']
             if f_caption is None:
-                f_caption = f"@Fs_Botz  {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files1.file_name.split()))}"
+                f_caption = f"{' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files1['file_name'].split()))}"
             if cd["update_channel_link"] != None:
                 up = cd["update_channel_link"]
                 button = [[
@@ -138,7 +129,7 @@ async def start(client, message):
     elif data.startswith("files"):
         if cd['url']:
             files_ = await get_file_details(file_id)
-            files = files_[0]
+            files = files_
             g = await get_clone_shortlink(f"https://telegram.me/{me.username}?start=file_{file_id}", cd["url"], cd["api"])
             t = cd["tutorial"]
             btn = [[
@@ -146,56 +137,20 @@ async def start(client, message):
             ],[
                 InlineKeyboardButton('⁉️ Hᴏᴡ Tᴏ Dᴏᴡɴʟᴏᴀᴅ ⁉️', url=t)
             ]]
-            k = await client.send_message(chat_id=message.from_user.id,text=f"<b>📕Nᴀᴍᴇ ➠ : <code>{files.file_name}</code> \n\n🔗Sɪᴢᴇ ➠ : {get_size(files.file_size)}\n\n📂Fɪʟᴇ ʟɪɴᴋ ➠ : {g}\n\n<i>Note: This message is deleted in 20 mins to avoid copyrights. Save the link to Somewhere else</i></b>", reply_markup=InlineKeyboardMarkup(btn))
+            k = await client.send_message(chat_id=message.from_user.id,text=f"<b>📕Nᴀᴍᴇ ➠ : <code>{files['file_name']}</code> \n\n🔗Sɪᴢᴇ ➠ : {get_size(files['file_size'])}\n\n📂Fɪʟᴇ ʟɪɴᴋ ➠ : {g}\n\n<i>Note: This message is deleted in 20 mins to avoid copyrights. Save the link to Somewhere else</i></b>", reply_markup=InlineKeyboardMarkup(btn))
             await asyncio.sleep(1200)
             await k.edit("<b>Your message is successfully deleted!!!</b>")
             return
     user = message.from_user.id
     files_ = await get_file_details(file_id)           
     if not files_:
-        pre, file_id = ((base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))).decode("ascii")).split("_", 1)
-        try:
-            k = await temp.BOT.send_cached_media(chat_id=PUBLIC_FILE_CHANNEL, file_id=file_id)
-            vj = await client.get_messages(PUBLIC_FILE_CHANNEL, k.id)
-            mg = getattr(vj, vj.media.value)
-            file_id = mg.file_id
-            if cd["update_channel_link"] != None:
-                up = cd["update_channel_link"]
-                button = [[
-                    InlineKeyboardButton('🍿 ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ 🍿', url=up)
-                ]]
-                reply_markup=InlineKeyboardMarkup(button)
-            else:
-                reply_markup=None
-            msg = await client.send_cached_media(
-                chat_id=message.from_user.id,
-                file_id=file_id,
-                protect_content=True if pre == 'filep' else False,
-                reply_markup=reply_markup
-            )
-            filetype = msg.media
-            file = getattr(msg, filetype.value)
-            title = '@Fs_Botz  ' + ' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), file.file_name.split()))
-            size=get_size(file.file_size)
-            f_caption = f"<code>{title}</code>"
-            await msg.edit_caption(
-                caption=f_caption,
-                reply_markup=reply_markup
-            )
-            k = await msg.reply("<b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\nThis Movie File/Video will be deleted in <b><u>10 mins</u> 🫥 <i></b>(Due to Copyright Issues)</i>.\n\n<b><i>Please forward this File/Video to your Saved Messages and Start Download there</i></b>",quote=True)
-            await asyncio.sleep(600)
-            await msg.delete()
-            await k.edit_text("<b>Your File/Video is successfully deleted!!!</b>")
-            return
-        except:
-            pass
-        return await message.reply('No such file exist.')
-    files = files_[0]
-    title = '@Fs_Botz  ' + ' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files.file_name.split()))
-    size=get_size(files.file_size)
-    f_caption=files.caption
+        return await message.reply('**No such file exist.**')
+    files = files_
+    title = ' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files['file_name'].split()))
+    size=get_size(files['file_size'])
+    f_caption=files['caption']
     if f_caption is None:
-        f_caption = f"@Fs_Botz  {' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files.file_name.split()))}"
+        f_caption = f"{' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@'), files['file_name'].split()))}"
     if cd["update_channel_link"] != None:
         up = cd["update_channel_link"]
         button = [[
@@ -212,7 +167,7 @@ async def start(client, message):
         chat_id=message.from_user.id,
         file_id=file_id,
         caption=f_caption,
-        protect_content=True if pre == 'filep' else False,
+        protect_content=False,
         reply_markup=reply_markup
     )
     k = await msg.reply("<b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\nThis Movie File/Video will be deleted in <b><u>10 mins</u> 🫥 <i></b>(Due to Copyright Issues)</i>.\n\n<b><i>Please forward this File/Video to your Saved Messages and Start Download there</i></b>",quote=True)
@@ -231,7 +186,7 @@ async def settings(client, message):
     api = await client.ask(message.chat.id, "<b>Now Send Your Api</b>")
     try:
         shortzy = Shortzy(api_key=api.text, base_site=url.text)
-        link = 'https://t.me/Fs_Botz'
+        link = 'https://t.me/VJ_Botz'
         await shortzy.convert(link)
     except Exception as e:
         await message.reply(f"**Error In Converting Link**\n\n<code>{e}</code>\n\n**Start The Process Again By - /settings**", reply_markup=InlineKeyboardMarkup(btn))
@@ -275,68 +230,7 @@ async def reset_settings(client, message):
 async def stats(client, message):
     me = await client.get_me()
     total_users = await clonedb.total_users_count(me.id)
-    total = await Media.count_documents()
+    filesp = col.count_documents({})
+    totalsec = sec_col.count_documents({})
+    total = int(filesp) + int(totalsec)
     await message.reply(f"**Total Files : {total}\n\nTotal Users : {total_users}**")
-
-
-#Send message to a single user
-@Client.on_message(filters.command('pm'))
-async def pm_send(client, message):
-    try:
-        me = await client.get_me()
-        owner = await db.get_bot(me.id)
-        if owner["user_id"] != message.from_user.id:
-            return
-        # Ask for the user ID
-        pm_user = await client.ask(chat_id=message.from_user.id, text="Now Send Me The User ID")
-        pm_user_id = int(pm_user.text)  # Convert to integer
-        
-        # Ask for the message to send
-        PM_MESSAGE = await client.ask(chat_id=message.from_user.id, text="Now Send Me The Message To Be Sent")
-        pm_text = "MESSAGE FROM ADMIN \n"+(PM_MESSAGE.text)
-        
-        # Send the message to the specified user
-        await client.send_message(chat_id=pm_user_id, text=pm_text)
-        val = 0
-
-    except ValueError:
-        await client.send_message(chat_id=message.from_user.id, text="The User ID must be a number.")
-        val = 1
-    except Exception as e:
-        await client.send_message(chat_id=message.from_user.id, text=f"An error occurred: {str(e)}")
-        val = 1
-    if val != 1:
-        await client.send_message(chat_id=message.from_user.id, text="Message Send To User Successfully")
-
-#Send msg to admin
-@Client.on_message(filters.command('admin'))
-async def admin_send(client, message):
-    try:
-        # the user ID
-        me = await client.get_me()
-        clone_owner = await db.get_bot(me.id)
-        CLONE_ADMIN = int(clone_owner["user_id"])
-        # Ask for the message to send
-        PM_MESSAGE = await client.ask(chat_id=message.from_user.id, text="Now Send Me The Message To Be Sent")
-        
-        userid = message.from_user.id
-        DEFAULT_TXT = """YOU HAVE A MESSAGE FROM USER ID <code>{user}</code>\n\n"""
-        
-        # Format the user ID into the default text
-        USER_TXT = DEFAULT_TXT.format(user=userid)
-        
-        # Combine the default text with the user's message
-        pm_text = USER_TXT + PM_MESSAGE.text
-        
-        # Send the message to the admin
-        await client.send_message(chat_id=CLONE_ADMIN, text=pm_text)
-        fs = 0
-
-    except ValueError:
-        await client.send_message(chat_id=message.from_user.id, text="Something wrong Try again later")
-        fs = 1
-    except Exception as e:
-        await client.send_message(chat_id=message.from_user.id, text=f"An error occurred: {str(e)}")
-        fs = 1
-    if fs != 1:
-        await client.send_message(chat_id=message.from_user.id, text="Message Send to Admin")
