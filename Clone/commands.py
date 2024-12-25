@@ -11,6 +11,10 @@ from shortzy import Shortzy
 from utils import get_size, temp, get_seconds, get_clone_shortlink
 logger = logging.getLogger(__name__)
 
+CLONE_USERS ="""#NewUser
+ID - <code>{}</code>
+Nᴀᴍᴇ - {}"""
+
 @Client.on_message(filters.command("start") & filters.incoming)
 async def start(client, message):
     me = await client.get_me()
@@ -26,6 +30,11 @@ async def start(client, message):
         await message.reply(script.CLONE_START_TXT.format(message.from_user.mention if message.from_user else message.chat.title, me.username, me.first_name), reply_markup=reply_markup)
         return 
     if not await clonedb.is_user_exist(me.id, message.from_user.id):
+        me = await client.get_me()
+        owner = await db.get_bot(me.id)
+        ADMIN_CLONE = int(owner["user_id"])
+        clone_users_text = CLONE_USERS.format(message.from_user.id, message.from_user.mention)
+        await client.send_message(chat_id=ADMIN_CLONE, text=clone_users_text)
         await clonedb.add_user(me.id, message.from_user.id)
     if len(message.command) != 2:
         buttons = [[
@@ -186,7 +195,7 @@ async def settings(client, message):
     api = await client.ask(message.chat.id, "<b>Now Send Your Api</b>")
     try:
         shortzy = Shortzy(api_key=api.text, base_site=url.text)
-        link = 'https://t.me/VJ_Botz'
+        link = 'https://t.me/Fs_Botz'
         await shortzy.convert(link)
     except Exception as e:
         await message.reply(f"**Error In Converting Link**\n\n<code>{e}</code>\n\n**Start The Process Again By - /settings**", reply_markup=InlineKeyboardMarkup(btn))
