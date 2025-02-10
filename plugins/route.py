@@ -13,8 +13,8 @@ routes = web.RouteTableDef()
 
 @routes.get("/", allow_head=True)
 async def root_route_handler(request):
-    # Redirect to the provided URL
-    return web.HTTPFound("https://fsbotztg.netlify.app")
+    return web.json_response("FsBotz")
+
 
 @routes.get(r"/watch/{path:\S+}", allow_head=True)
 async def stream_handler(request: web.Request):
